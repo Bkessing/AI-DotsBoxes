@@ -45,6 +45,7 @@ public class Board {
 		String[] temp = line.split(",");
 		int index1 = Integer.decode(temp[0]);
 		int index2 = Integer.decode(temp[1]);
+		if (state[index1][index2] == " ") {
 		if (index2 % 2 == 0) {
 			state[index1][index2] ="-";
 		}
@@ -61,7 +62,11 @@ public class Board {
 			p2Connected.add(connect);
 		}
 		this.connected.add(connect);
-
+		}
+		else {
+			System.out.println("Invalid");
+			this.takeTurn("");
+		}
 	}
 
 	private void getRandoms(String[][] state) {
@@ -155,6 +160,9 @@ public class Board {
 	}
 	
 	private void checkForWin() {
+		if(notClaimed.size() == 0) {
+			playing = false;
+		}
 		Iterator<int[]> iter = notClaimed.iterator();
 		while(iter.hasNext()) {
 			int [] i = iter.next();
