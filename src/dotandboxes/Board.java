@@ -45,11 +45,11 @@ public class Board {
 		int index1 = Integer.decode(temp[0]);
 		int index2 = Integer.decode(temp[1]);
 		if (state[index1][index2] == " ") {
-		if (index2 % 2 == 0) {
-			state[index1][index2] ="-";
+		if (player1Turn) {
+			state[index1][index2] ="o";
 		}
 		else {
-			state[index1][index2] ="|";
+			state[index1][index2] ="a";
 		}
 		int[] connect = new int[] {index1, index2};
 		
