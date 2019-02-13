@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.Scanner;
 
-import javax.swing.JFrame;
 
 public class Board {
 	int[] values;
@@ -160,9 +159,7 @@ public class Board {
 	}
 	
 	private void checkForWin() {
-		if(notClaimed.size() == 0) {
-			playing = false;
-		}
+		
 		Iterator<int[]> iter = notClaimed.iterator();
 		while(iter.hasNext()) {
 			int [] i = iter.next();
@@ -175,6 +172,9 @@ public class Board {
 				}
 				iter.remove();
 				
+			}
+			if(notClaimed.size() == 0) {
+				playing = false;
 			}
 			
 		}
