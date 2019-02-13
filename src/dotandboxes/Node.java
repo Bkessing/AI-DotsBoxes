@@ -9,6 +9,7 @@ public class Node {
 	boolean max;
 	String[][] state;
 	int score;
+	ArrayList<int[]> notClaimed;
 	
 	
 	public Node(String[][] state) {
@@ -74,6 +75,16 @@ public class Node {
 
 	public void setScore(int score) {
 		this.score = score;
+	}
+
+
+	public ArrayList<int[]> getNotClaimed() {
+		return notClaimed;
+	}
+
+
+	public void setNotClaimed(ArrayList<int[]> notClaimed) {
+		this.notClaimed = notClaimed;
 	}
 	
 	
