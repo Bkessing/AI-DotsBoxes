@@ -1,8 +1,8 @@
 package dotandboxes;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
+// basic node to hold all needed data
 public class Node {
 	int depth;
 	boolean max;

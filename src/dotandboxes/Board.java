@@ -6,44 +6,34 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.Stack;
 
+/*
+ * This is the main game board, this keeps the current state of the game and can check for wins and loses.
+ */
 public class Board {
 	int[] values;
+	int numOfMoves;
 	String[][] state;
 	ArrayList<int[]> connected;
-	ArrayList<int[]> p1Connected;
-	ArrayList<int[]> p2Connected;
 	ArrayList<int[]> notClaimed;
 	boolean player1Turn;
 	boolean player2Turn;
 	boolean playing;
-	int p1Score;
-	int p2Score;
 	Scanner reader;
+	Player player;
 	AI ai;
-	AI ai2;
-	int numOfMoves;
 
-	public Board(String[][] startState) {
+	public Board(String[][] startState,int numOfMoves) {
 		this.state = startState;
 		this.connected = new ArrayList<int[]>();
-		this.p1Connected = new ArrayList<int[]>();
-		this.p2Connected = new ArrayList<int[]>();
 		this.notClaimed = new ArrayList<int[]>();
 		this.reader = new Scanner(System.in);
-		this.numOfMoves = 12;
-
+		this.numOfMoves = numOfMoves;
 		this.getRandoms(state);
-		this.ai = new AI();
-		this.ai2 = new AI();
-
-		player1Turn = true;
-		player2Turn = false;
-
-		p1Score = 0;
-		p2Score = 0;
+		this.player1Turn = true;
+		this.player2Turn = false;
 
 	}
-
+	// connect() takes a index into the state of the board from the player or the AI, it add the according char to it ie. - or _
 	public void connect(String line) {
 		String[] temp = line.split(",");
 		int index1 = Integer.decode(temp[0]);
@@ -57,36 +47,39 @@ public class Board {
 			int[] connect = new int[] { index1, index2 };
 
 			if (player1Turn) {
-				p1Connected.add(connect);
+				// updates player's move list
+				player.addMove(connect);
 
 			} else {
-				p2Connected.add(connect);
+				// updates ai's move list
+				ai.addMove(connect);
 			}
 			this.connected.add(connect);
 		} else {
-			System.out.println("Invalid");
-			this.takeTurn();
+			// if space is not a valid space or space is filled throw an exception
+			throw new IllegalArgumentException();
 		}
 	}
 
+	// getRandoms() inserts random numbers between 1 - 5 into the center of all boxes on the board.
 	private void getRandoms(String[][] state) {
 		Random r = new Random();
-		for (int i = 2; i < 5; i = i + 2) {
-			for (int j = 2; j < 5; j = j + 2) {
+		for (int i = 2; i < state.length; i = i + 2) {
+			for (int j = 2; j < state.length; j = j + 2) {
 				Integer x = new Integer(r.nextInt(4) + 1);
 				state[i][j] = x.toString();
+				// adds all center locations into the not claimed boxes list
 				notClaimed.add(new int[] { i, j });
 			}
 		}
 
 	}
-
-	public void print() {
-
+	// print() just prints some logistics of the game state and scores and prints the game board.
+	private void print() {
 		System.out.print("Player1's lines: ");
-		for (int i = 0; i < p1Connected.size(); i++) {
-			for (int j = 0; j < p1Connected.get(0).length; j++) {
-				System.out.print(p1Connected.get(i)[j]);
+		for (int i = 0; i < player.getMoves().size(); i++) {
+			for (int j = 0; j < player.getMoves().get(0).length; j++) {
+				System.out.print(player.getMoves().get(i)[j]);
 				if (j == 0) {
 					System.out.print(",");
 				}
@@ -96,12 +89,12 @@ public class Board {
 		}
 
 		System.out.println("");
-		System.out.println("Player1's Score: " + p1Score);
+		System.out.println("Player1's Score: " + player.getScore());
 
 		System.out.print("Player2's lines: ");
-		for (int i = 0; i < p2Connected.size(); i++) {
-			for (int j = 0; j < p2Connected.get(0).length; j++) {
-				System.out.print(p2Connected.get(i)[j]);
+		for (int i = 0; i < ai.getMoves().size(); i++) {
+			for (int j = 0; j < ai.getMoves().get(0).length; j++) {
+				System.out.print(ai.getMoves().get(i)[j]);
 				if (j == 0) {
 					System.out.print(",");
 				}
@@ -111,7 +104,7 @@ public class Board {
 		}
 
 		System.out.println("");
-		System.out.println("Player2's Score: " + p2Score);
+		System.out.println("Player2's Score: " + ai.getScore());
 
 		for (int i = 0; i < state.length; i++) {
 			for (int j = 0; j < state[0].length; j++) {
@@ -122,17 +115,24 @@ public class Board {
 
 	}
 
-	public void start() {
+	// start() is the game loop that switches players each turn and updates the number of moves left
+	// also calls for 
+	public void start(AI ai, Player player) {
+		this.player = player;
+		this.ai = ai;
 		playing = true;
 		while (playing) {
 			if (player1Turn) {
-				this.takeTurn();
-				// this.takeAiTurn(this.ai2);
+				this.print();
+				try {
+					this.connect(player.takeTurn());
+				} catch (Exception e) {
+					continue;
+				}
 				this.checkForWin();
 				this.numOfMoves--;
 				this.player1Turn = false;
 				this.player2Turn = true;
-				// this.print();
 
 			} else {
 				this.takeAiTurn(this.ai);
@@ -140,7 +140,6 @@ public class Board {
 				this.numOfMoves--;
 				this.player2Turn = false;
 				this.player1Turn = true;
-				// this.print();
 
 			}
 
@@ -148,14 +147,8 @@ public class Board {
 
 	}
 
-	private void takeTurn() {
-		this.print();
-		System.out.println("Enter space to put line using format: y,x ");
-		String line = reader.next();
-		this.connect(line);
-
-	}
-
+	// checkForWins() this functions checks the updated state of the board, if the last move closed the box it removes that box from notClaimed list and updates the players score
+	// according to the value of that box. It also check for the end of the game.
 	private void checkForWin() {
 
 		Iterator<int[]> iter = notClaimed.iterator();
@@ -164,9 +157,9 @@ public class Board {
 			if (state[i[0] + 1][i[1]] != " " && state[i[0] - 1][i[1]] != " " && state[i[0]][i[1] + 1] != " "
 					&& state[i[0]][i[1] - 1] != " ") {
 				if (player1Turn) {
-					p1Score = p1Score + Integer.decode(state[i[0]][i[1]]);
+					player.addScore(Integer.decode(state[i[0]][i[1]]));
 				} else {
-					p2Score = p2Score + Integer.decode(state[i[0]][i[1]]);
+					ai.addScore(Integer.decode(state[i[0]][i[1]]));
 				}
 				iter.remove();
 
@@ -178,20 +171,22 @@ public class Board {
 
 		}
 	}
-
+	// sets up the starting node with the current values of the board
+	// then builds the ai tree and finds the best move
 	private void takeAiTurn(AI ai) {
 		Node startNode = new Node(this.state);
 		startNode.setNotClaimed(this.copy(this.notClaimed));
 		startNode.setMax(true);
-		startNode.setEvalScore(this.p2Score - this.p1Score);
+		startNode.setEvalScore(ai.getScore() - player.getScore());
 		Stack<Node> tree = ai.buildTree(startNode, this.numOfMoves);
 		int[] move = ai.findTurn(tree);
 		String line = move[0] + "," + move[1];
 		this.connect(line);
+		// delete tree so heap doesn't run of out memory
 		ai.deleteTree();
 
 	}
-
+	// aux function to copy lists so we don't reference the current board states
 	private ArrayList<int[]> copy(ArrayList<int[]> toCopy) {
 		ArrayList<int[]> copy = new ArrayList<int[]>();
 
